@@ -1,0 +1,21 @@
+package com.pixels.zapierClone.automation_platform.security.security;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Service;
+
+@Service
+public class EmailService {
+
+    @Autowired
+    private JavaMailSender mailSender;
+
+    public void sendVerificationEmail(String toEmail, String verificationLink) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("Workflow Automation : Verify your email");
+        message.setText("Please click the link to verify your email:\n" + verificationLink);
+        mailSender.send(message);
+    }
+}
