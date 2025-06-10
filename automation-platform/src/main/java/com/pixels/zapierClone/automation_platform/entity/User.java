@@ -1,30 +1,16 @@
 package com.pixels.zapierClone.automation_platform.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "users")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class User {
+
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable=false,unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
 
     private String password;
@@ -37,15 +23,74 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role userRole;
 
-    @Builder.Default
     private boolean isVerified = false;
+
+    public User() {
+    }
+
+    public User(Long id, String email, String password, String name, AuthProvider provider, Role userRole, boolean isVerified) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.provider = provider;
+        this.userRole = userRole;
+        this.isVerified = isVerified;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public AuthProvider getProvider() {
+        return provider;
+    }
+
+    public void setProvider(AuthProvider provider) {
+        this.provider = provider;
+    }
+
+    public Role getUserRole() {
+        return userRole;
+    }
+
+    public void setUserRole(Role userRole) {
+        this.userRole = userRole;
+    }
 
     public boolean isVerified() {
         return isVerified;
     }
 
     public void setVerified(boolean verified) {
-        this.isVerified = verified;
+        isVerified = verified;
     }
-
 }

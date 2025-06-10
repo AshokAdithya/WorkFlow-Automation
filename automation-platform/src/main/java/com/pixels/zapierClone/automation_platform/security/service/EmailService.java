@@ -1,4 +1,4 @@
-package com.pixels.zapierClone.automation_platform.security.security;
+package com.pixels.zapierClone.automation_platform.security.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
