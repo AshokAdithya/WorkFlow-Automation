@@ -12,6 +12,8 @@ import {
   REGISTER,
 } from "redux-persist";
 import storage from "redux-persist/lib/storage";
+import WorkflowReducer from "./WorkflowSlice";
+import servicesReducer from "./ServicesSlice";
 
 const persistConfig = {
   key: "root",
@@ -21,6 +23,8 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   auth: AuthReducer,
+  workflow: WorkflowReducer,
+  services: servicesReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
