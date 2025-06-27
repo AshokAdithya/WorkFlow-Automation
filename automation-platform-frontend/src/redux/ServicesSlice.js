@@ -11,11 +11,10 @@ export const fetchServices = createAsyncThunk(
   "services/fetchServices",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("/app-integrations");
+      const response = await api.get("/integrations");
       const apps = Array.isArray(response.data)
         ? response.data
         : response.data.apps;
-
       return Array.isArray(apps) ? apps : [];
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);

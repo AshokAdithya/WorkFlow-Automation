@@ -10,6 +10,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.pixels.zapierClone.automation_platform.entity.User;
+import com.pixels.zapierClone.automation_platform.repository.UserRepository;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -23,6 +26,9 @@ public class JwtFilter extends OncePerRequestFilter {
     private JwtService jwtService;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private UserDetailsService userDetailsService;
 
     @Override 
@@ -32,11 +38,16 @@ public class JwtFilter extends OncePerRequestFilter {
         if(token!=null && jwtService.validateAccessToken(token)){
             String email = jwtService.extractEmail(token);
 
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            request.setAttribute("userId", user.getId());
         }
 
         filterChain.doFilter(request,response);

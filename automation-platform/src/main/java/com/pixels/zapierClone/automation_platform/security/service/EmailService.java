@@ -14,8 +14,18 @@ public class EmailService {
     public void sendVerificationEmail(String toEmail, String verificationLink) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
-        message.setSubject("Workflow Automation : Verify your email");
+        message.setSubject("AutomateX : Verify your email");
         message.setText("Please click the link to verify your email:\n" + verificationLink);
+        mailSender.send(message);
+    }
+
+    public void sendNotificationForExpiredToken(String toEmail,String serviceName){
+        String subject = "AutomateX : Re-authentication Needed";
+        String context = "Your credentials for " + serviceName + " have expired. Please sign in again to continue using workflows.";
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(context);
         mailSender.send(message);
     }
 }

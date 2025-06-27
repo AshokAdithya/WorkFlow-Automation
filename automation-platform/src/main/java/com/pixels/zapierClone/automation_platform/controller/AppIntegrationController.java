@@ -1,71 +1,52 @@
-// package com.pixels.zapierClone.automation_platform.controller;
-
-// import java.util.Optional;
-
-// import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.http.ResponseEntity;
-// import org.springframework.web.bind.annotation.PostMapping;
-// import org.springframework.web.bind.annotation.RequestBody;
-// import org.springframework.web.bind.annotation.RequestMapping;
-// import org.springframework.web.bind.annotation.RestController;
-
-// import com.pixels.zapierClone.automation_platform.entity.AppIntegration;
-// import com.pixels.zapierClone.automation_platform.repository.AppIntegrationRepository;
-// import com.pixels.zapierClone.automation_platform.service.AppIntegrationMetadataService;
-// import org.springframework.web.bind.annotation.GetMapping;
-// import org.springframework.web.bind.annotation.RequestParam;
-
-
-// @RestController
-// @RequestMapping("/api/app-integration")
-// public class AppIntegrationController {
-    
-//     @Autowired
-//     private AppIntegrationMetadataService appIntegrationService;
-
-//     @PostMapping
-//     private ResponseEntity<AppIntegration> saveAppIntegration(@RequestBody AppIntegration appIntegration){
-//         return ResponseEntity.ok(appIntegrationService.saveAppIntegration(appIntegration));
-//     }
-
-//     @GetMapping("/{appIntegrationId}")
-//     public ResponseEntity<Optional<AppIntegration>> getByAppIntegrationId(@RequestParam Long appIntegrationId) {
-//         return ResponseEntity.ok(appIntegrationService.findById(appIntegrationId));
-//     }
-    
-// }
-
 package com.pixels.zapierClone.automation_platform.controller;
 
 import com.pixels.zapierClone.automation_platform.entity.AppIntegration;
-import com.pixels.zapierClone.automation_platform.service.AppIntegrationMetadataService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import com.pixels.zapierClone.automation_platform.repository.AppIntegrationRepository;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.pixels.zapierClone.automation_platform.dto.AppIntegrationDTO;
+import com.pixels.zapierClone.automation_platform.entity.User;
+import com.pixels.zapierClone.automation_platform.repository.CredentialRepository;
+import com.pixels.zapierClone.automation_platform.repository.UserRepository;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping("/api/app-integrations")
+@RequestMapping("/api/integrations")
 public class AppIntegrationController {
 
-    @Autowired
-    private AppIntegrationMetadataService appIntegrationMetadataService;
-
-    @PostMapping
-    public ResponseEntity<AppIntegration> saveAppIntegration(@RequestBody AppIntegration appIntegration){
-        return ResponseEntity.ok(appIntegrationMetadataService.saveAppIntegration(appIntegration));
-    }
+    @Autowired private UserRepository userRepo;
+    @Autowired private AppIntegrationRepository appIntegrationRepo;
+    @Autowired private CredentialRepository credentialRepo;
 
     @GetMapping
-    public ResponseEntity<List<AppIntegration>> getAllAppIntegrations() {
-        return ResponseEntity.ok(appIntegrationMetadataService.findAll());
-    }
+    public List<AppIntegrationDTO> getAllIntegrations(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
 
-    @GetMapping("/{id}")
-    public ResponseEntity<AppIntegration> getAppIntegrationById(@PathVariable Long id) {
-        return appIntegrationMetadataService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        User user = userRepo.findById(userId).orElseThrow();
+
+        List<AppIntegration> allIntegrations = appIntegrationRepo.findAll();
+
+        return allIntegrations.stream()
+                .map((app)->{
+                    boolean connected = credentialRepo.existsByUserAndAppIntegration(user,app);
+                    return new AppIntegrationDTO(
+                        app.getId(),
+                        app.getName(),
+                        app.getIdentifier(),
+                        app.getDescription(),
+                        app.getLogoUrl() ,
+                        app.getAuthType(),
+                        connected,
+                        app.getActionDefinitions(),
+                        app.getTriggerDefinitions()
+                    );
+                }).collect(Collectors.toList());
     }
 }

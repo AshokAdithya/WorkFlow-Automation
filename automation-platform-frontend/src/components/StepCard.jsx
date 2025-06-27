@@ -16,10 +16,10 @@ const StepCard = ({
   const isTrigger = step.type === "trigger";
   const services = useSelector((state) => state.services.apps);
   const selectedApp = services.find((app) => step.app == app.id);
-  const selectedEvent = step.event
-    ? step.event === "trigger"
-      ? selectedApp.triggers.find((event) => event.id === step.event)
-      : selectedApp.actions.find((event) => event.id === step.event)
+  const selectedEvent = step.type
+    ? step.type === "trigger"
+      ? selectedApp.triggerDefinitions.find((event) => event.id === step.event)
+      : selectedApp.actionDefinitions.find((event) => event.id === step.event)
     : null;
 
   return (

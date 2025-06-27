@@ -8,17 +8,27 @@ const StepDetailSidebar = ({
   chooseService,
   chooseEvent,
   onClose,
+  updateConfig,
+  openOAuthPopup,
 }) => {
   const services = useSelector((state) => state.services.apps);
   const workflow = useSelector((state) => state.workflow);
-  if (!isOpen && !index) return null;
   const step = workflow.steps[index];
+  if (!isOpen || !step) return null;
   const selectedApp = services.find((app) => app.id === step.app);
-  const selectedEvent = step.event
-    ? step.event === "trigger"
-      ? selectedApp.triggers.find((event) => event.id === step.event)
-      : selectedApp.actions.find((event) => event.id === step.event)
+  const selectedEvent = step.type
+    ? step.type === "trigger"
+      ? selectedApp.triggerDefinitions.find((event) => event.id === step.event)
+      : selectedApp.actionDefinitions.find((event) => event.id === step.event)
     : null;
+  let parsedConfig = null;
+  try {
+    parsedConfig = selectedEvent?.configJson
+      ? JSON.parse(selectedEvent.configJson)
+      : null;
+  } catch (e) {
+    console.error("Failed to parse configJson", e);
+  }
 
   return (
     <div className="fixed top-6 right-6 z-20 w-[400px] max-h-[85vh] bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
@@ -79,9 +89,16 @@ const StepDetailSidebar = ({
             Account *
           </label>
           <div className="flex items-center justify-between border px-3 py-2 rounded-md bg-gray-50">
-            <span className="truncate text-gray-800">Connected Account</span>
-            <button className="text-indigo-600 text-xs font-medium hover:underline">
-              Change
+            <span className="truncate text-gray-800">
+              {selectedApp?.connected
+                ? "Change Account"
+                : `Connect ${selectedApp.name}`}
+            </span>
+            <button
+              className="text-indigo-600 text-xs font-medium hover:underline"
+              onClick={() => openOAuthPopup(selectedApp.identifier)}
+            >
+              {selectedApp?.connected ? "Change" : "Connect"}
             </button>
           </div>
         </div>
@@ -93,6 +110,31 @@ const StepDetailSidebar = ({
           </a>
           .
         </p>
+        {parsedConfig?.fields?.map((field) => (
+          <div key={field.name}>
+            <label className="block text-gray-600 font-medium mb-1">
+              {field.label} {field.required && "*"}
+            </label>
+            {field.type === "textarea" ? (
+              <textarea
+                required={field.required}
+                className="w-full border px-3 py-2 rounded-md bg-gray-50 mb-4"
+                placeholder={field.label}
+                value={step.inputConfig?.[field.name] || ""}
+                onChange={(e) => updateConfig(step, field, e)}
+              />
+            ) : (
+              <input
+                type={field.type}
+                required={field.required}
+                className="w-full border px-3 py-2 rounded-md bg-gray-50 mb-4"
+                placeholder={field.label}
+                value={step.inputConfig?.[field.name] || ""}
+                onChange={(e) => updateConfig(step, field, e)}
+              />
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

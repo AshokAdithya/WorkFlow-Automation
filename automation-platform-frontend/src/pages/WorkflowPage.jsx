@@ -9,9 +9,11 @@ import {
   X,
   Search,
 } from "lucide-react";
-import axios from "axios";
 import { fetchServices } from "../redux/servicesSlice";
 import { v4 as uuidv4 } from "uuid";
+import { toast } from "react-toastify";
+import { api } from "../api/Api";
+import { useLocation } from "react-router-dom";
 
 // Import Redux hooks and Provider
 import { Provider, useSelector, useDispatch } from "react-redux";
@@ -28,9 +30,11 @@ import ServiceSelectionModal from "../components/ServiceSelectionModal";
 import StepCard from "../components/StepCard";
 import EventSelectionModal from "../components/EventSelectionModal";
 import StepDetailSidebar from "../components/StepDetailSidebar";
-
+import Button from "../components/Button";
 const Workflow = () => {
   const dispatch = useDispatch();
+  const location = useLocation();
+  const { id } = location.state || {};
   const workflow = useSelector((state) => state.workflow);
   const {
     apps: supportedApplications,
@@ -52,25 +56,55 @@ const Workflow = () => {
   useEffect(() => {
     dispatch(fetchServices());
 
-    if (!workflow.id) {
-      dispatch(
-        setWorkflow({
-          id: "workflow-" + Date.now(),
-          name: "Untitled Workflow",
-          isEnabled: false,
-          steps: [],
-        })
-      );
-    }
-  }, [workflow.id, dispatch]);
+    const fetchWorkflow = async () => {
+      if (!id) {
+        dispatch(
+          setWorkflow({
+            id: "workflow-new-temp-" + Date.now(),
+            name: "My New Workflow",
+            enabled: false,
+            steps: [],
+          })
+        );
+      } else {
+        try {
+          const res = await api.get(`/workflows/${id}`);
+          const stepsWithIds = res.data.steps.map((step) => ({
+            ...step,
+            inputConfig:
+              typeof step.inputConfig === "string"
+                ? JSON.parse(step.inputConfig)
+                : step.inputConfig,
+            id: `step-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          }));
+          dispatch(setWorkflow({ ...res.data, steps: stepsWithIds }));
+        } catch (err) {
+          dispatch(
+            setWorkflow({
+              id: "workflow-new-temp-" + Date.now(),
+              name: "My New Workflow",
+              enabled: false,
+              steps: [],
+            })
+          );
+        }
+      }
+    };
+    fetchWorkflow();
+
+    const unloadCallback = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+      return "";
+    };
+
+    window.addEventListener("beforeunload", unloadCallback);
+    return () => window.removeEventListener("beforeunload", unloadCallback);
+  }, [id]);
 
   //Handling Name change of the workflow
   const handleWorkflowNameChange = (e) => {
     dispatch(setWorkflowName(e.target.value));
-  };
-
-  const handleToggleWorkflow = () => {
-    dispatch(toggleWorkflowEnabled());
   };
 
   //Handling Drag and Drop action
@@ -130,6 +164,7 @@ const Workflow = () => {
       id: `step-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       type: type,
       app: selectedApp.id,
+      isConnected: false,
     };
 
     dispatch(addStep({ newStep, type }));
@@ -143,7 +178,7 @@ const Workflow = () => {
   const handleDeleteStep = (stepIdToDelete) => {
     dispatch(deleteStep(stepIdToDelete));
     setTimeout(() => {
-      selectedStepNull();
+      setSelectedStep(null);
     }, 100);
   };
 
@@ -178,8 +213,21 @@ const Workflow = () => {
       })
     );
     refreshSelectedStep(step.id);
-    setShowEventSelectionModal(true);
+    setShowEventSelectionModal(false);
     setIsFromSidebarForEvent(null);
+  };
+
+  const handleChangeConfig = (step, field, e) => {
+    dispatch(
+      updateStep({
+        stepId: step.id,
+        field: "inputConfig",
+        value: {
+          ...step.inputConfig,
+          [field.name]: e.target.value,
+        },
+      })
+    );
   };
 
   const handleServiceSelectedAndAddStep = (step, service) => {
@@ -202,8 +250,89 @@ const Workflow = () => {
     setIsFromSidebarForService(null);
   };
 
+  const handleSaveWorkflow = async () => {
+    const payload = {
+      id:
+        typeof workflow.id === "string" &&
+        workflow.id.startsWith("workflow-new-temp")
+          ? null
+          : workflow.id,
+      name: workflow.name,
+      enabled: workflow.enabled,
+      steps: workflow.steps.map((s, i) => ({
+        stepOrder: i,
+        type: s.type,
+        app: s.app,
+        event: s.event,
+        inputConfig: JSON.stringify(s.inputConfig || {}),
+      })),
+    };
+
+    try {
+      const res = await api.post("/workflows/save", payload);
+      const stepsWithIds = res.data.steps.map((step) => ({
+        ...step,
+        inputConfig:
+          typeof step.inputConfig === "string"
+            ? JSON.parse(step.inputConfig)
+            : step.inputConfig,
+        id: `step-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      }));
+      dispatch(setWorkflow({ ...res.data, steps: stepsWithIds }));
+      toast.success("Workflow saved successfully");
+    } catch (e) {
+      console.error(e);
+      toast.warn("Save failed: " + e.response?.data?.message);
+    }
+  };
+
+  const toggleWorkflow = async (workflowId) => {
+    try {
+      const res = await api.patch(`/workflows/toggle/${workflowId}`, {});
+      const { success, message } = res.data;
+
+      console.log(res.data);
+
+      dispatch(toggleWorkflowEnabled(success));
+      toast.success(message);
+    } catch (err) {
+      dispatch(toggleWorkflowEnabled(false));
+      toast.error(err.response?.data?.message || "Failed to toggle workflow");
+    }
+  };
+
+  const openAuthServices = async (serviceIdentifier) => {
+    const width = 700;
+    const height = 700;
+    const left = window.innerWidth / 2 - width;
+    const top = window.innerHeight / 2 - height / 2;
+
+    try {
+      const response = await api.get(`/oauth/${serviceIdentifier}/authorize`);
+      const authUrl = response.data;
+
+      const popup = window.open(
+        authUrl,
+        "OAuthPopup",
+        `width=${width},height=${height},top=${top},left=${left}`
+      );
+
+      const interval = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(interval);
+          console.log("OAuth popup closed. Refresh account info.");
+        }
+      }, 1000);
+      dispatch(fetchServices());
+    } catch (err) {
+      console.error("Failed to open OAuth popup:", err);
+    }
+  };
+
   const hasTrigger =
-    workflow.steps.length > 0 && workflow.steps[0].type === "trigger";
+    workflow.steps &&
+    workflow.steps.length > 0 &&
+    workflow.steps[0].type === "trigger";
 
   return (
     <div className="fixed inset-0 z-50 bg-gray-100 bg-opacity-90 flex items-center justify-center">
@@ -235,34 +364,33 @@ const Workflow = () => {
           </div>
           <div className="flex items-center space-x-4">
             <button
-              onClick={handleToggleWorkflow}
+              onClick={() => toggleWorkflow(workflow.id)}
               className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                workflow.isEnabled // Read from Redux state
+                workflow.enabled // Read from Redux state
                   ? "bg-green-500 focus:ring-green-600"
                   : "bg-gray-300 focus:ring-gray-400"
               }`}
-              aria-checked={workflow.isEnabled}
+              aria-checked={workflow.enabled}
               role="switch"
             >
               <span
                 className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ${
-                  workflow.isEnabled ? "translate-x-9" : "translate-x-1"
+                  workflow.enabled ? "translate-x-9" : "translate-x-1"
                 }`}
               />
               <span className="absolute inset-0 flex items-center justify-between px-1.5">
-                {workflow.isEnabled ? (
+                {workflow.enabled ? (
                   <Power className="text-white ml-0.5" size={16} />
                 ) : (
                   <Power className="text-gray-600 mr-0.5" size={16} />
                 )}
               </span>
             </button>
-            <button
-              title="Workflow Settings"
-              className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200"
-            >
-              <Settings size={24} />
-            </button>
+            <Button
+              children={"Save"}
+              onClick={handleSaveWorkflow}
+              variant="primary"
+            />
           </div>
         </div>
 
@@ -297,19 +425,20 @@ const Workflow = () => {
             </button>
           )}
 
-          {workflow.steps.map((step, index) => (
-            <StepCard
-              key={step.id}
-              step={step}
-              index={index}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onDeleteStep={handleDeleteStep}
-              isDraggable={step.type === "action"}
-              onClick={handleSelectStep}
-            />
-          ))}
+          {workflow.steps &&
+            workflow.steps.map((step, index) => (
+              <StepCard
+                key={step.id}
+                step={step}
+                index={index}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onDeleteStep={handleDeleteStep}
+                isDraggable={step.type === "action"}
+                onClick={handleSelectStep}
+              />
+            ))}
 
           <button
             onClick={openAddActionModal}
@@ -347,6 +476,8 @@ const Workflow = () => {
         chooseService={handleSelectServiceFromSidebar}
         chooseEvent={handleSelectEventFromSidebar}
         onClose={selectedStepNull}
+        updateConfig={handleChangeConfig}
+        openOAuthPopup={openAuthServices}
       />
     </div>
   );

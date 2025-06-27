@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   id: null,
   name: "",
-  isEnabled: false,
+  enabled: false,
   steps: [],
 };
 
@@ -14,11 +14,11 @@ export const workflowSlice = createSlice({
     setWorkflow: (state, action) => {
       state.id = action.payload.id;
       state.name = action.payload.name;
-      state.isEnabled = action.payload.isEnabled;
+      state.enabled = action.payload.enabled;
       state.steps = action.payload.steps;
     },
-    toggleWorkflowEnabled: (state) => {
-      state.isEnabled = !state.isEnabled;
+    toggleWorkflowEnabled: (state, action) => {
+      state.enabled = action.payload;
     },
     setWorkflowName: (state, action) => {
       state.name = action.payload;
@@ -41,11 +41,17 @@ export const workflowSlice = createSlice({
     },
     updateStep: (state, action) => {
       const { stepId, field, value } = action.payload;
-      const stepToUpdate = state.steps.find((step) => step.id === stepId);
-      if (stepToUpdate) {
-        stepToUpdate[field] = value;
-      }
+
+      state.steps = state.steps.map((step) =>
+        step.id === stepId
+          ? {
+              ...step,
+              [field]: value, // updates inputConfig, event, etc.
+            }
+          : step
+      );
     },
+
     reorderSteps: (state, action) => {
       state.steps = action.payload;
     },

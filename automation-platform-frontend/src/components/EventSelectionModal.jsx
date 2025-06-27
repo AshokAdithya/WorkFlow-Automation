@@ -16,8 +16,8 @@ const EventSelectionModal = ({
   const selectedApp = services.find((app) => app.id === dataFromSidebar.app);
   const events =
     dataFromSidebar.type === "trigger"
-      ? selectedApp?.triggers || []
-      : selectedApp?.actions || [];
+      ? selectedApp?.triggerDefinitions || []
+      : selectedApp?.actionDefinitions || [];
 
   const filteredEvents = events.filter(
     (event) =>
