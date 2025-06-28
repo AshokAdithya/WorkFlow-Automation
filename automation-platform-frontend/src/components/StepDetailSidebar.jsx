@@ -1,6 +1,8 @@
 import React from "react";
 import { X, Zap } from "lucide-react";
 import { useSelector } from "react-redux";
+import { ClipboardCopy } from "lucide-react";
+import { toast } from "react-toastify";
 
 const StepDetailSidebar = ({
   isOpen,
@@ -22,6 +24,7 @@ const StepDetailSidebar = ({
       : selectedApp.actionDefinitions.find((event) => event.id === step.event)
     : null;
   let parsedConfig = null;
+
   try {
     parsedConfig = selectedEvent?.configJson
       ? JSON.parse(selectedEvent.configJson)
@@ -29,6 +32,11 @@ const StepDetailSidebar = ({
   } catch (e) {
     console.error("Failed to parse configJson", e);
   }
+
+  const copyToClipboard = async (webhookUrl) => {
+    await navigator.clipboard.writeText(webhookUrl);
+    toast.success("Webhook url saved successfully");
+  };
 
   return (
     <div className="fixed top-6 right-6 z-20 w-[400px] max-h-[85vh] bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
@@ -83,25 +91,26 @@ const StepDetailSidebar = ({
             {selectedEvent ? "Change" : "Choose"}
           </button>
         </div>
-
-        <div>
-          <label className="block text-gray-600 font-medium mb-1">
-            Account *
-          </label>
-          <div className="flex items-center justify-between border px-3 py-2 rounded-md bg-gray-50">
-            <span className="truncate text-gray-800">
-              {selectedApp?.connected
-                ? "Change Account"
-                : `Connect ${selectedApp.name}`}
-            </span>
-            <button
-              className="text-indigo-600 text-xs font-medium hover:underline"
-              onClick={() => openOAuthPopup(selectedApp.identifier)}
-            >
-              {selectedApp?.connected ? "Change" : "Connect"}
-            </button>
+        {selectedApp.authType !== "NONE" && (
+          <div>
+            <label className="block text-gray-600 font-medium mb-1">
+              Account *
+            </label>
+            <div className="flex items-center justify-between border px-3 py-2 rounded-md bg-gray-50">
+              <span className="truncate text-gray-800">
+                {selectedApp?.connected
+                  ? "Change Account"
+                  : `Connect ${selectedApp.name}`}
+              </span>
+              <button
+                className="text-indigo-600 text-xs font-medium hover:underline"
+                onClick={() => openOAuthPopup(selectedApp.identifier)}
+              >
+                {selectedApp?.connected ? "Change" : "Connect"}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         <p className="text-xs text-gray-500 leading-snug">
           Your credentials are stored securely.{" "}
@@ -110,6 +119,40 @@ const StepDetailSidebar = ({
           </a>
           .
         </p>
+
+        {step?.webhookUrl && (
+          <div className="relative bg-violet-50 border border-violet-200 p-4 rounded-xl space-y-2 w-full max-w-lg">
+            <h3 className="font-semibold text-sm text-gray-800">
+              Your webhook URL
+            </h3>
+            <p className="text-sm text-gray-500">
+              You’ll need to configure your application with this webhook URL.
+            </p>
+
+            <div className="relative flex items-center border border-gray-200 rounded-lg bg-white pl-3 pr-16 py-2">
+              <img
+                src="/zapier-icon.svg"
+                alt="zapier"
+                className="w-5 h-5 mr-2"
+              />
+              <span className="text-sm text-gray-700 truncate">
+                http://localhost:8080/catch/hooks/
+                {step.webhookUrl}
+              </span>
+
+              <button
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray-100 hover:bg-gray-200 text-sm text-gray-700 px-3 py-1 border border-gray-300 rounded-md shadow-sm"
+                onClick={() =>
+                  copyToClipboard(
+                    `http://localhost:8080/catch/hooks/${step.webhookUrl}`
+                  )
+                }
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        )}
         {parsedConfig?.fields?.map((field) => (
           <div key={field.name}>
             <label className="block text-gray-600 font-medium mb-1">

@@ -114,8 +114,7 @@ public class GoogleFormsIntegrationHandler implements IntegrationHandler {
 
     @Override
     public List<Map<String, String>> executeAction(String actionIdentifier, Map<String, Object> inputConfig, Credential credential) {
-        Map<String,String> temp = new HashMap<>();
-        return List.of(temp);
+        throw new IllegalArgumentException("Unsupported Gmail action: " + actionIdentifier);
     }
 
     @Override

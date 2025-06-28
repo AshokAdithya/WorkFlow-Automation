@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from "uuid";
 import { toast } from "react-toastify";
 import { api } from "../api/Api";
 import { useLocation } from "react-router-dom";
+import { nanoid } from "nanoid";
 
 // Import Redux hooks and Provider
 import { Provider, useSelector, useDispatch } from "react-redux";
@@ -212,6 +213,15 @@ const Workflow = () => {
         value: event.id,
       })
     );
+    if (event.triggerTypeIdentifier === "webhook_trigger") {
+      dispatch(
+        updateStep({
+          stepId: step.id,
+          field: "webhookUrl",
+          value: nanoid(),
+        })
+      );
+    }
     refreshSelectedStep(step.id);
     setShowEventSelectionModal(false);
     setIsFromSidebarForEvent(null);
@@ -265,6 +275,7 @@ const Workflow = () => {
         app: s.app,
         event: s.event,
         inputConfig: JSON.stringify(s.inputConfig || {}),
+        webhookUrl: s.webhookUrl || null,
       })),
     };
 

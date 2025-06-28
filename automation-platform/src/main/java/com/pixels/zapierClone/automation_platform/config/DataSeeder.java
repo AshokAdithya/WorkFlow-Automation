@@ -28,7 +28,7 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        if (appIntegrationRepository.count() > 0) return;
+      if (appIntegrationRepository.count() > 0) return;
 
         // ------------ Gmail ------------
         AppIntegration gmail = new AppIntegration();
@@ -127,5 +127,23 @@ public class DataSeeder implements CommandLineRunner {
             }
         """);
         actionDefinitionRepository.save(slackMsg);
+
+      AppIntegration webhookApp = new AppIntegration();
+      webhookApp.setName("Webhook");
+      webhookApp.setIdentifier("webhook");
+      webhookApp.setDescription("Trigger workflows via incoming HTTP webhook calls.");
+      webhookApp.setLogoUrl("https://placehold.co/40x40/FF9800/FFFFFF?text=WH");
+      webhookApp.setAuthType("NONE"); // No auth needed
+
+      appIntegrationRepository.save(webhookApp);
+
+      TriggerDefinition webhookTrigger = new TriggerDefinition();
+      webhookTrigger.setAppIntegration(webhookApp);
+      webhookTrigger.setTriggerTypeIdentifier("webhook_trigger");
+      webhookTrigger.setName("Incoming Webhook");
+      webhookTrigger.setDescription("Triggered when a webhook is received at a unique URL.");
+      webhookTrigger.setConfigJson(null); // or skip setting this
+
+      triggerDefinitionRepository.save(webhookTrigger);
     }
 }

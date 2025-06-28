@@ -116,15 +116,19 @@ public class GmailIntegrationHandler implements IntegrationHandler {
 
     @Override
     public TriggerResult isTriggerFired(Long triggerId,String triggerIdentifier, Map<String, Object> inputConfig, Credential credential) {
-        return new TriggerResult(false,List.of()); 
+        throw new IllegalArgumentException("Unsupported service: " + triggerIdentifier);
     }
 
     @Override
     public List<Map<String, String>> executeAction(String actionIdentifier, Map<String, Object> resolvedConfig, Credential credential) {
-        if (!"send_email".equals(actionIdentifier)) {
-            throw new IllegalArgumentException("Unsupported Gmail action: " + actionIdentifier);
-        }
 
+        return switch (actionIdentifier){
+            case "send_email" ->sendEmail(resolvedConfig,credential);
+            default -> throw new IllegalArgumentException("Unsupported Gmail action: " + actionIdentifier);
+        };
+    }
+
+    public List<Map<String,String>> sendEmail(Map<String, Object> resolvedConfig, Credential credential){
         String accessToken = credential.getAccessToken();
         String to = (String) resolvedConfig.get("to");
         String subject = (String) resolvedConfig.get("subject");

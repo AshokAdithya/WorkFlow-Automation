@@ -108,10 +108,13 @@ public class SlackIntegrationHandler implements IntegrationHandler {
 
     @Override
     public List<Map<String, String>> executeAction(String actionIdentifier, Map<String, Object> inputConfig, Credential credential) {
-        if (!"send_slack_message".equals(actionIdentifier)) {
-            throw new IllegalArgumentException("Unsupported Slack action: " + actionIdentifier);
-        }
+        return switch (actionIdentifier){
+            case "send_slack_message" ->sendMessageToChannelAsBot(inputConfig,credential);
+            default -> throw new IllegalArgumentException("Unsupported Gmail action: " + actionIdentifier);
+        };
+    }
 
+    public List<Map<String,String>> sendMessageToChannelAsBot(Map<String, Object> inputConfig, Credential credential){
         String channel = (String) inputConfig.get("channel");
         String message = (String) inputConfig.get("message");
 

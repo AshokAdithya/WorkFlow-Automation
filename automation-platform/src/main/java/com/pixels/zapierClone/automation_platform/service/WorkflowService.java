@@ -50,6 +50,8 @@ public class WorkflowService {
 
     @Transactional
     public Workflow createOrUpdateWorkflow(Long userId, WorkflowDTO dto) {
+
+        System.out.println(dto);
         User user = userRepo.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -65,6 +67,8 @@ public class WorkflowService {
             for (WorkflowStepDTO step : dto.getSteps()) {
                 AppIntegration app = appRepo.findById(step.getApp())
                     .orElseThrow(() -> new RuntimeException("App not found"));
+
+                if("NONE".equals(app.getAuthType())) continue;
                 credRepo.findByUserAndAppIntegration(user, app)
                     .orElseThrow(() -> new RuntimeException("Missing credentials for " + app.getName()));
             }
@@ -84,12 +88,12 @@ public class WorkflowService {
                 .orElseThrow(() -> new RuntimeException("App not found"));
 
             if ("trigger".equalsIgnoreCase(sd.getType())) {
-                System.out.println(sd.getInputConfig());
                 TriggerDefinition td = triggerDefRepo.getByIdAndAppIntegration(sd.getEvent(), app);
                 Trigger tr = new Trigger();
                 tr.setTriggerDefinition(td);
                 tr.setUser(user);
                 tr.setInputConfig(sd.getInputConfig()); 
+                tr.setWebhookPath(sd.getWebhookUrl());
                 triggerRepo.save(tr);
                 step.setTrigger(tr);
             } else {
@@ -125,6 +129,7 @@ public class WorkflowService {
                 stepDTO.setApp(step.getTrigger().getTriggerDefinition().getAppIntegration().getId());
                 stepDTO.setEvent(step.getTrigger().getTriggerDefinition().getId());
                 stepDTO.setInputConfig(step.getTrigger().getInputConfig());
+                stepDTO.setWebhookUrl(step.getTrigger().getWebhookPath());
             } else if (step.getAction() != null) {
                 stepDTO.setApp(step.getAction().getActionDefinition().getAppIntegration().getId());
                 stepDTO.setEvent(step.getAction().getActionDefinition().getId());
@@ -186,6 +191,7 @@ public class WorkflowService {
                 }
 
                 if (app != null) {
+                    if("NONE".equals(app.getAuthType())) continue;
                     boolean connected = credRepo.existsByUserAndAppIntegration(user, app);
                     if (!connected) {
                         throw new RuntimeException("Missing credentials for app: " + app.getName());

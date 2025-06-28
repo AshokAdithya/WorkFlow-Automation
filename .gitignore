@@ -1,0 +1,65 @@
+# Ignore specific files and folders
+automation-platform/HELP.md
+automation-platform/target/
+automation-platform/.mvn/wrapper/maven-wrapper.jar
+
+# Include specific 'target/' folders under src/main and src/test
+!automation-platform/**/src/main/**/target/
+!automation-platform/**/src/test/**/target/
+
+### STS ###
+automation-platform/.apt_generated
+automation-platform/.classpath
+automation-platform/.factorypath
+automation-platform/.project
+automation-platform/.settings
+automation-platform/.springBeans
+automation-platform/.sts4-cache
+
+### IntelliJ IDEA ###
+automation-platform/.idea/
+automation-platform/*.iws
+automation-platform/*.iml
+automation-platform/*.ipr
+
+### NetBeans ###
+automation-platform/nbproject/private/
+automation-platform/nbbuild/
+automation-platform/dist/
+automation-platform/nbdist/
+automation-platform/.nb-gradle/
+automation-platform/build/
+
+application.properties
+automation-platform/src/main/resources/application.properties
+
+# Include specific 'build/' folders under src/main and src/test
+!automation-platform/**/src/main/**/build/
+!automation-platform/**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+automation-platform-frontend/logs
+automation-platform-frontend/*.log
+automation-platform-frontend/npm-debug.log*
+automation-platform-frontend/yarn-debug.log*
+automation-platform-frontend/yarn-error.log*
+automation-platform-frontend/pnpm-debug.log*
+automation-platform-frontend/lerna-debug.log*
+
+automation-platform-frontend/node_modules
+automation-platform-frontend/dist
+automation-platform-frontend/dist-ssr
+automation-platform-frontend/*.local
+
+# Editor directories and files
+automation-platform-frontend/.vscode/*
+automation-platform-frontend/!.vscode/extensions.json
+automation-platform-frontend/.idea
+automation-platform-frontend/.DS_Store
+automation-platform-frontend/*.suo
+automation-platform-frontend/*.ntvs*
+automation-platform-frontend/*.njsproj
+automation-platform-frontend/*.sln
+automation-platform-frontend/*.sw?

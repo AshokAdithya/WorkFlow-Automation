@@ -1,6 +1,7 @@
 package com.pixels.zapierClone.automation_platform.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +24,6 @@ public interface TriggerRepository extends JpaRepository<Trigger, Long> {
         WHERE ws.trigger.id = :triggerId
     """)
     Workflow findWorkflowByTriggerId(Long triggerId);
+
+    Optional<Trigger> findByWebhookPath(String webhookPath);
 }

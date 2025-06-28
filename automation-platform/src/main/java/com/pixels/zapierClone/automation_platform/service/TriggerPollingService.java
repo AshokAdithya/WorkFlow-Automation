@@ -33,9 +33,8 @@ public class TriggerPollingService {
     @Autowired private ObjectMapper objectMapper;
 
     @Transactional()
-    @Scheduled(fixedRate = 6000000) // Every 1 minute
+    @Scheduled(fixedRate = 90000) // Every 1 minute
     public void pollTriggers() {
-        System.out.println("started");
         List<Trigger> triggers = triggerRepository.getAllTriggersForPoll();
 
         for (Trigger trigger : triggers) {

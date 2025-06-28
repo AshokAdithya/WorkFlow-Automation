@@ -1,8 +1,6 @@
 package com.pixels.zapierClone.automation_platform.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 
 import org.hibernate.annotations.JdbcTypeCode;

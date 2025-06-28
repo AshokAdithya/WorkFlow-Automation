@@ -7,7 +7,8 @@ public class WorkflowStepDTO {
     private String type;
     private Long app;    
     private Long event;   
-    private String inputConfig; 
+    private String inputConfig;
+    private String webhookUrl; 
 
     public int getStepOrder() {
         return stepOrder;
@@ -47,5 +48,13 @@ public class WorkflowStepDTO {
 
     public void setInputConfig(String config) {
         this.inputConfig = config;
+    }
+
+    public String getWebhookUrl() {
+        return webhookUrl;
+    }
+
+    public void setWebhookUrl(String webhookUrl) {
+        this.webhookUrl = webhookUrl;
     }
 }
